@@ -7,6 +7,7 @@ import com.example.airlineReservation.repository.AirlineReservationRepository;
 import com.example.airlineReservation.repository.AirlineReservationRepositoryImpl;
 import com.example.airlineReservation.repository.PassengerRepository;
 import com.example.airlineReservation.repository.PassengerRepositoryImpl;
+import com.example.airlineReservation.security.JwtRequestFilter;
 import com.example.airlineReservation.service.AirlineReservationService;
 import com.example.airlineReservation.service.AirlineReservationServiceImpl;
 import com.example.airlineReservation.service.PassengerService;
@@ -38,5 +39,10 @@ public class AppConfig {
 	@Bean
 	public PassengerRepository passengerRepository() {
 		return new PassengerRepositoryImpl();
+	}
+	
+	@Bean
+	public JwtRequestFilter jwtRequestFilter() {
+		return new JwtRequestFilter();
 	}
 }
