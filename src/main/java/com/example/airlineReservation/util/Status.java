@@ -1,4 +1,4 @@
-package com.example.airlineReservation.model;
+package com.example.airlineReservation.util;
 
 public class Status {
 

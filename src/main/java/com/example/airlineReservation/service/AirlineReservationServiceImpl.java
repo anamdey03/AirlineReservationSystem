@@ -1,61 +1,106 @@
 package com.example.airlineReservation.service;
 
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.validation.ValidationException;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.util.ReflectionUtils;
 
-import com.example.airlineReservation.model.AirlineReservationOutput;
 import com.example.airlineReservation.model.ReservationDetails;
-import com.example.airlineReservation.model.Status;
-import com.example.airlineReservation.model.TravelDetails;
-import com.example.airlineReservation.model.TravelDetailsOutput;
 import com.example.airlineReservation.repository.AirlineReservationRepository;
-import com.example.airlineReservation.repository.TravelRepository;
+import com.example.airlineReservation.util.BookingStatus;
+import com.example.airlineReservation.util.FieldValidationStatus;
+import com.example.airlineReservation.util.PerformStatus;
+import com.example.airlineReservation.util.Status;
+import com.example.airlineReservation.util.TravelDetails;
+import com.example.airlineReservation.util.TravelDetailsOutput;
 
-@Service
 public class AirlineReservationServiceImpl implements AirlineReservationService {
-	
+
 	@Autowired
 	private AirlineReservationRepository airlineReservationRepository;
-	
-	@Autowired
-	private TravelRepository travelRepository;
 
 	@Override
-	public AirlineReservationOutput addBookingDetails(ReservationDetails airlineReservation) {
-		airlineReservation.setBookedDateTime(LocalDateTime.now());
-		ReservationDetails reservationDetailsAdded =  airlineReservationRepository.save(airlineReservation);
+	public FieldValidationStatus addBookingDetails(ReservationDetails airlineReservation) {
+		airlineReservation.setBookingDateTime(LocalDateTime.now());
+		airlineReservation.setBookingStatus(BookingStatus.BOOKED.name());
+		ReservationDetails reservationDetailsAdded = airlineReservationRepository
+				.saveBookingDetails(airlineReservation);
 		return addedBookingDetails(reservationDetailsAdded);
 	}
 
 	@Override
 	public TravelDetailsOutput getTravelDetailsByTravelType(String travelType) {
-		List<ReservationDetails> reservationDetails = travelRepository.getTravelDetailsByTravelType(travelType);
+		List<ReservationDetails> reservationDetails = airlineReservationRepository
+				.getTravelDetailsByTravelType(travelType);
+		return getBookingDetails(reservationDetails);
+	}
+
+	@Override
+	public TravelDetailsOutput getTravelDetailsByBookingStatus(String bookingStatus) {
+		List<ReservationDetails> reservationDetails = airlineReservationRepository
+				.getTravelDetailsByBookingStatus(bookingStatus);
 		return getBookingDetails(reservationDetails);
 	}
 
 	@Override
 	public TravelDetailsOutput getTravelDetailsByDate(String startDate, String endDate) {
-		List<ReservationDetails> reservationDetails = travelRepository.getTravelDetailsByDate(startDate, endDate);
+		List<ReservationDetails> reservationDetails = airlineReservationRepository.getTravelDetailsByDate(startDate,
+				endDate);
 		return getBookingDetails(reservationDetails);
 	}
-	
+
+	@Override
+	public FieldValidationStatus updateBookingDetails(Long pnr, Map<String, Object> updates)
+			throws ValidationException {
+		ReservationDetails reservationDetailsUpdated = new ReservationDetails();
+		ReservationDetails reservationDetails = airlineReservationRepository.getBookingDetailsByPnr(pnr);
+		updates.forEach((key, value) -> {
+			// use reflection to get field key on object and set it to value value
+			// Change ReservationDetails.class to whatever your object is: Object.class
+			Field field = ReflectionUtils.findField(ReservationDetails.class, key); // find field in the object class
+			field.setAccessible(true);
+			ReflectionUtils.setField(field, reservationDetails, value); // set given field for defined object to value V
+		});
+		reservationDetailsUpdated = airlineReservationRepository.updateBookingDetails(reservationDetails);
+		return updatedBookingDetails(reservationDetailsUpdated);
+	}
+
+	@Override
+	public FieldValidationStatus cancelBookingDetails(Long pnr) {
+		ReservationDetails reservationDetails = airlineReservationRepository.getBookingDetailsByPnr(pnr);
+		if (reservationDetails.getBookingStatus().equals(BookingStatus.BOOKED.name())) {
+			reservationDetails.setBookingStatus(BookingStatus.CANCELLED.name());
+			reservationDetails = airlineReservationRepository.updateBookingDetails(reservationDetails);
+			return cancelBookingDetails(reservationDetails);
+		}
+		return cancelBookingDetailsFailed(reservationDetails);
+	}
+
 	private static TravelDetailsOutput getBookingDetails(List<ReservationDetails> reservationDetails) {
 		List<TravelDetails> travelDetails = new ArrayList<>();
 		TravelDetailsOutput travelDetailsOutput = new TravelDetailsOutput();
 		List<Status> statusList = new ArrayList<Status>();
 		Status status = new Status();
-		if(!reservationDetails.isEmpty()) {
+		if (!reservationDetails.isEmpty()) {
 			travelDetails = reservationDetails.stream()
-					.map(reservationDetail -> new TravelDetails(reservationDetail.getPnr(), 
-							reservationDetail.getPassengerName(), reservationDetail.getPassengerContactNumber(), reservationDetail.getBookedDateTime(),
-							reservationDetail.getSource(), reservationDetail.getDestination(), reservationDetail.getAddress().getTravelType(),
-							reservationDetail.getAddress().getAddressDetail().stream().filter(address -> address.getAddressType().equals("Source")).findFirst().get().getPincode(),
-							reservationDetail.getAddress().getAddressDetail().stream().filter(address -> address.getAddressType().equals("Destination")).findFirst().get().getPincode()))
+					.map(reservationDetail -> new TravelDetails(reservationDetail.getPnr(),
+							reservationDetail.getPassengerDetails().getPassengerName(),
+							reservationDetail.getPassengerDetails().getPassengerContactNumber(),
+							reservationDetail.getBookingDateTime(), reservationDetail.getSource(),
+							reservationDetail.getDestination(), reservationDetail.getAddress().getTravelType(),
+							reservationDetail.getAddress().getAddressDetail().stream()
+									.filter(address -> address.getAddressType().equals("Source")).findFirst().get()
+									.getPincode(),
+							reservationDetail.getAddress().getAddressDetail().stream()
+									.filter(address -> address.getAddressType().equals("Destination")).findFirst().get()
+									.getPincode()))
 					.collect(Collectors.toList());
 			status.setStatusLevel("success");
 			status.setMessage("Booking Details Fetched Successfully");
@@ -70,24 +115,52 @@ public class AirlineReservationServiceImpl implements AirlineReservationService 
 		travelDetailsOutput.setStatus(statusList);
 		return travelDetailsOutput;
 	}
-	
-	private static AirlineReservationOutput addedBookingDetails(ReservationDetails reservationDetails) {
-		AirlineReservationOutput airlineReservationOutput = new AirlineReservationOutput();
-		Status status = new Status();
+
+	private static FieldValidationStatus addedBookingDetails(ReservationDetails reservationDetails) {
+		FieldValidationStatus fieldValidationStatus = new FieldValidationStatus();
 		List<Status> statuses = new ArrayList<Status>();
-		if(!reservationDetails.getPnr().equals(null)) {
-			status.setStatusLevel("Success");
-			status.setMessage("Ticket booked successfully!!");
-			statuses.add(status);
-			airlineReservationOutput.setStatus(statuses);
-			airlineReservationOutput.setReservationDetails(reservationDetails);
-			return airlineReservationOutput;
+		if (!reservationDetails.getPnr().equals(null)) {
+			statuses.add(PerformStatus.bookingCreatedSuccess());
+			fieldValidationStatus.setStatus(statuses);
+			return fieldValidationStatus;
 		}
-		status.setStatusLevel("Failure");
-		status.setMessage("Booking Failed!!");
-		statuses.add(status);
-		airlineReservationOutput.setStatus(statuses);
-		return airlineReservationOutput;
+		statuses.add(PerformStatus.bookingCreatedFailed());
+		fieldValidationStatus.setStatus(statuses);
+		return fieldValidationStatus;
+	}
+
+	private static FieldValidationStatus updatedBookingDetails(ReservationDetails reservationDetails) {
+		FieldValidationStatus fieldValidationStatus = new FieldValidationStatus();
+		List<Status> statuses = new ArrayList<Status>();
+		if (!reservationDetails.getPnr().equals(null)) {
+			statuses.add(PerformStatus.bookingUpdateSuccess());
+			fieldValidationStatus.setStatus(statuses);
+			return fieldValidationStatus;
+		}
+		statuses.add(PerformStatus.bookingUpdateFailed());
+		fieldValidationStatus.setStatus(statuses);
+		return fieldValidationStatus;
+	}
+
+	private static FieldValidationStatus cancelBookingDetails(ReservationDetails reservationDetails) {
+		FieldValidationStatus fieldValidationStatus = new FieldValidationStatus();
+		List<Status> statuses = new ArrayList<Status>();
+		if (reservationDetails.getBookingStatus().equals(BookingStatus.CANCELLED.name())) {
+			statuses.add(PerformStatus.bookingCancelSuccess());
+			fieldValidationStatus.setStatus(statuses);
+			return fieldValidationStatus;
+		}
+		statuses.add(PerformStatus.bookingCancelFailed());
+		fieldValidationStatus.setStatus(statuses);
+		return fieldValidationStatus;
+	}
+
+	private static FieldValidationStatus cancelBookingDetailsFailed(ReservationDetails reservationDetails) {
+		FieldValidationStatus fieldValidationStatus = new FieldValidationStatus();
+		List<Status> statuses = new ArrayList<Status>();
+		statuses.add(PerformStatus.bookingCancelFailed());
+		fieldValidationStatus.setStatus(statuses);
+		return fieldValidationStatus;
 	}
 
 }

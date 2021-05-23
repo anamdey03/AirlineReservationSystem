@@ -1,6 +1,8 @@
-package com.example.airlineReservation.model;
+package com.example.airlineReservation.util;
 
 import java.util.List;
+
+import com.example.airlineReservation.model.ReservationDetails;
 
 public class AirlineReservationOutput {
 
