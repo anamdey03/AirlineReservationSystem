@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -90,13 +91,16 @@ public class AirlineReservationController {
 		return new ResponseEntity<String>(customerMapper.writeValueAsString(cancelBookingStatus), HttpStatus.OK);
 	}
 
-	// Get Booking Details of Passengers by Travel Type
-	@RequestMapping(path = "/booking/travelType/{travelType}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-	@ApiOperation(value = "Fetch Booking Details Of Passengers By Travel Type", response = TravelDetailsOutput.class, responseContainer = "String", httpMethod = "GET")
-	public ResponseEntity<String> getTravelDetailsByTravelType(@PathVariable String travelType)
+	// Get Booking Details of Passengers by Parameters
+	@RequestMapping(path = "/booking/search", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Fetch Booking Details Of Passengers By Parameters", response = TravelDetailsOutput.class, responseContainer = "String", httpMethod = "GET")
+	public ResponseEntity<String> getTravelDetailsByParameters(@RequestParam(required = false) String travelType,
+															   @RequestParam(required = false) String bookingStatus,
+															   @RequestParam(required = false) String source,
+															   @RequestParam(required = false) String destination)
 			throws JsonProcessingException {
 		ObjectMapper customerMapper = new ObjectMapper();
-		TravelDetailsOutput travelDetails = airlineReservationService.getTravelDetailsByTravelType(travelType);
+		TravelDetailsOutput travelDetails = airlineReservationService.getTravelDetailsByParameters(travelType, bookingStatus, source, destination);
 		customerMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 		customerMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
 		customerMapper.setAnnotationIntrospector(new JacksonAnnotationIntrospector())
@@ -105,21 +109,6 @@ public class AirlineReservationController {
 		return new ResponseEntity<String>(customerMapper.writeValueAsString(travelDetails), HttpStatus.OK);
 	}
 	
-	// Get Booking Details of Passengers by Booking Status
-		@RequestMapping(path = "/booking/bookingStatus/{bookingStatus}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-		@ApiOperation(value = "Fetch Booking Details Of Passengers By Booking Status", response = TravelDetailsOutput.class, responseContainer = "String", httpMethod = "GET")
-		public ResponseEntity<String> getTravelDetailsByBookingStatus(@PathVariable String bookingStatus)
-				throws JsonProcessingException {
-			ObjectMapper customerMapper = new ObjectMapper();
-			TravelDetailsOutput travelDetails = airlineReservationService.getTravelDetailsByBookingStatus(bookingStatus);
-			customerMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-			customerMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
-			customerMapper.setAnnotationIntrospector(new JacksonAnnotationIntrospector())
-					.registerModule(new JavaTimeModule()).setDateFormat(new StdDateFormat())
-					.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-			return new ResponseEntity<String>(customerMapper.writeValueAsString(travelDetails), HttpStatus.OK);
-		}
-
 	// Get Booking Details of Passengers between Start Date and End Date
 	@RequestMapping(path = "/booking/{startDate}/and/{endDate}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ApiOperation(value = "Fetch Booking Details Of Passengers Present Between Start and End Date", response = TravelDetailsOutput.class, responseContainer = "String", httpMethod = "GET")

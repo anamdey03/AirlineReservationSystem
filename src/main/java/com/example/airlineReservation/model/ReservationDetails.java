@@ -19,25 +19,19 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity(name = "reservationDetails")
 @NamedQueries({
-		@NamedQuery(name = ReservationDetails.TICKET_DETAILS_TRAVEL_TYPE, query = ReservationDetails.TICKET_DETAILS_TRAVEL_TYPE_QUERY),
+		@NamedQuery(name = ReservationDetails.TICKET_DETAILS_BY_PARAMETERS, query = ReservationDetails.TICKET_DETAILS_BY_PARAMETERS_QUERY),
 		@NamedQuery(name = ReservationDetails.TICKET_DETAILS_BY_DATE, query = ReservationDetails.TICKET_DETAILS_BY_DATE_QUERY),
-		@NamedQuery(name = ReservationDetails.TICKET_DETAILS_BOOKING_STATUS, query = ReservationDetails.TICKET_DETAILS_BOOKING_STATUS_QUERY),
 		@NamedQuery(name = ReservationDetails.TICKET_DETAILS_BY_PNR, query = ReservationDetails.TICKET_DETAILS_BY_PNR_QUERY) })
 public class ReservationDetails {
 
-	public static final String TICKET_DETAILS_TRAVEL_TYPE = "ReservationDetails.ticketDetailsByTravelType";
-	public static final String TICKET_DETAILS_TRAVEL_TYPE_QUERY = "Select distinct rd from reservationDetails rd "
-			+ "left join passengerDetails pd on rd.passengerDetails = pd.passengerId "
-			+ "left join address a on rd.pnr = a.reservationDetails "
-			+ "left join addressDetail ad on a.addressId = ad.address " + "where a.travelType = :travelType";
-	
-	public static final String TICKET_DETAILS_BOOKING_STATUS = "ReservationDetails.ticketDetailsByBookingStatus";
-	public static final String TICKET_DETAILS_BOOKING_STATUS_QUERY = "Select distinct rd from reservationDetails rd "
+	public static final String TICKET_DETAILS_BY_PARAMETERS = "ReservationDetails.ticketDetailsByParameters";
+	public static final String TICKET_DETAILS_BY_PARAMETERS_QUERY = "Select distinct rd from reservationDetails rd "
 			+ "left join passengerDetails pd on rd.passengerDetails = pd.passengerId "
 			+ "left join address a on rd.pnr = a.reservationDetails "
 			+ "left join addressDetail ad on a.addressId = ad.address " 
-			+ "where rd.bookingStatus = :bookingStatus";
-
+			+ "where (:travelType IS NULL OR a.travelType = :travelType) AND (:bookingStatus IS NULL OR rd.bookingStatus = :bookingStatus) "
+			+ "AND (:source IS NULL OR rd.source = :source) AND (:destination IS NULL OR rd.destination = :destination)";
+	
 	public static final String TICKET_DETAILS_BY_DATE = "ReservationDetails.ticketDetailsByDate";
 	public static final String TICKET_DETAILS_BY_DATE_QUERY = "Select distinct rd from reservationDetails rd "
 			+ "left join passengerDetails pd on rd.passengerDetails = pd.passengerId "

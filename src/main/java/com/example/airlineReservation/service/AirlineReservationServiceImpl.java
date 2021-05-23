@@ -36,16 +36,9 @@ public class AirlineReservationServiceImpl implements AirlineReservationService 
 	}
 
 	@Override
-	public TravelDetailsOutput getTravelDetailsByTravelType(String travelType) {
+	public TravelDetailsOutput getTravelDetailsByParameters(String travelType, String bookingStatus, String source, String destination) {
 		List<ReservationDetails> reservationDetails = airlineReservationRepository
-				.getTravelDetailsByTravelType(travelType);
-		return getBookingDetails(reservationDetails);
-	}
-
-	@Override
-	public TravelDetailsOutput getTravelDetailsByBookingStatus(String bookingStatus) {
-		List<ReservationDetails> reservationDetails = airlineReservationRepository
-				.getTravelDetailsByBookingStatus(bookingStatus);
+				.getTravelDetailsByParameters(travelType, bookingStatus, source, destination);
 		return getBookingDetails(reservationDetails);
 	}
 

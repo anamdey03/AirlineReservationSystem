@@ -24,10 +24,13 @@ public class AirlineReservationRepositoryImpl implements AirlineReservationRepos
 	}
 
 	@Override
-	public List<ReservationDetails> getTravelDetailsByTravelType(String travelType) {
+	public List<ReservationDetails> getTravelDetailsByParameters(String travelType, String bookingStatus, String source, String destination) {
 		TypedQuery<ReservationDetails> query = entityManager
-				.createNamedQuery("ReservationDetails.ticketDetailsByTravelType", ReservationDetails.class);
+				.createNamedQuery("ReservationDetails.ticketDetailsByParameters", ReservationDetails.class);
 		query.setParameter("travelType", travelType);
+		query.setParameter("bookingStatus", bookingStatus != null ? bookingStatus.toUpperCase() : null);
+		query.setParameter("source", source);
+		query.setParameter("destination", destination);
 		List<ReservationDetails> result = query.getResultList();
 		return result;
 	}
@@ -38,15 +41,6 @@ public class AirlineReservationRepositoryImpl implements AirlineReservationRepos
 				ReservationDetails.class);
 		query.setParameter("startDate", startDate);
 		query.setParameter("endDate", endDate);
-		List<ReservationDetails> result = query.getResultList();
-		return result;
-	}
-	
-	@Override
-	public List<ReservationDetails> getTravelDetailsByBookingStatus(String bookingStatus) {
-		TypedQuery<ReservationDetails> query = entityManager
-				.createNamedQuery("ReservationDetails.ticketDetailsByBookingStatus", ReservationDetails.class);
-		query.setParameter("bookingStatus", bookingStatus.toUpperCase());
 		List<ReservationDetails> result = query.getResultList();
 		return result;
 	}
