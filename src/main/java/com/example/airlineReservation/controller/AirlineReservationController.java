@@ -3,6 +3,7 @@ package com.example.airlineReservation.controller;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -42,6 +43,8 @@ import io.swagger.annotations.ApiOperation;
 @RestController
 @RequestMapping("api/v1/airlineReservation")
 public class AirlineReservationController {
+	
+	private static final String PASSENGER_PNR = "pnr";
 
 	@Autowired
 	private AirlineReservationService airlineReservationService;
@@ -78,12 +81,17 @@ public class AirlineReservationController {
 	}
 
 	// Cancel Booking by PNR
-	@RequestMapping(path = "booked/cancel/{pnr}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-	@ApiOperation(value = "Cancel Booking", response = FieldValidationStatus.class, responseContainer = "String", httpMethod = "GET")
-	public ResponseEntity<String> cancelBooking(@PathVariable Long pnr)
+	@RequestMapping(path = "booked/cancel", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Cancel Booking", response = FieldValidationStatus.class, responseContainer = "String", httpMethod = "PUT")
+	public ResponseEntity<String> cancelBooking(@RequestBody Map<String, Long> pnr)
 			throws JsonProcessingException, ValidationException {
+		Long passengerPnr = null;
 		ObjectMapper customerMapper = new ObjectMapper();
-		FieldValidationStatus cancelBookingStatus = airlineReservationService.cancelBookingDetails(pnr);
+		Set<String> keys = pnr.entrySet().stream().map(entry -> entry.getKey()).collect(Collectors.toSet());
+		if(keys.contains(PASSENGER_PNR)) {
+			passengerPnr = pnr.entrySet().stream().findFirst().get().getValue();
+		}
+		FieldValidationStatus cancelBookingStatus = airlineReservationService.cancelBookingDetails(passengerPnr);
 		customerMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 		customerMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
 		customerMapper.setAnnotationIntrospector(new JacksonAnnotationIntrospector())
