@@ -13,4 +13,5 @@ public interface AirlineReservationRepository {
 	public List<ReservationDetails> getTravelDetailsByDate(String startDate, String endDate);
 	public ReservationDetails updateBookingDetails(ReservationDetails reservationDetails);
 	public ReservationDetails getBookingDetailsByPnr(Long pnr) throws ValidationException;
+	public List<ReservationDetails> getBookingDetailsByCashbackEligibilty(Integer age, String gender, String travelType);
 }

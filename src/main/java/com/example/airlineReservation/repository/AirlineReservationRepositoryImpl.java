@@ -10,6 +10,7 @@ import javax.transaction.Transactional;
 import javax.validation.ValidationException;
 
 import com.example.airlineReservation.model.ReservationDetails;
+import com.example.airlineReservation.util.BookingStatus;
 
 public class AirlineReservationRepositoryImpl implements AirlineReservationRepository {
 
@@ -64,6 +65,18 @@ public class AirlineReservationRepositoryImpl implements AirlineReservationRepos
 		} catch (NoResultException exp) {
 			throw new ValidationException("Booking Detail is not availble for the entered PNR");
 		}
+		return result;
+	}
+
+	@Override
+	public List<ReservationDetails> getBookingDetailsByCashbackEligibilty(Integer age, String gender,
+			String travelType) {
+		TypedQuery<ReservationDetails> query = entityManager.createNamedQuery("ReservationDetails.reservationDetailsByCashbackEligibility", ReservationDetails.class);
+		query.setParameter("gender", gender);
+		query.setParameter("age", age);
+		query.setParameter("travelType", travelType);
+		query.setParameter("bookingStatus", BookingStatus.BOOKED.name());
+		List<ReservationDetails> result = query.getResultList();
 		return result;
 	}
 

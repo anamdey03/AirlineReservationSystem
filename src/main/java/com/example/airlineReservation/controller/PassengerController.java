@@ -63,4 +63,5 @@ public class PassengerController {
 				.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 		return new ResponseEntity<String>(customerMapper.writeValueAsString(passengerDetailsUpdatedOutput), HttpStatus.OK);
 	}
+	
 }

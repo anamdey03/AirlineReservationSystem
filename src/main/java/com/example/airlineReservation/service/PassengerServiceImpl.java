@@ -68,5 +68,4 @@ public class PassengerServiceImpl implements PassengerService {
 		fieldValidationStatus.setStatus(statuses);
 		return fieldValidationStatus;
 	}
-
 }

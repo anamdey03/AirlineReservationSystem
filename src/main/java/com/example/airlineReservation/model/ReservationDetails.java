@@ -21,17 +21,18 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 @NamedQueries({
 		@NamedQuery(name = ReservationDetails.TICKET_DETAILS_BY_PARAMETERS, query = ReservationDetails.TICKET_DETAILS_BY_PARAMETERS_QUERY),
 		@NamedQuery(name = ReservationDetails.TICKET_DETAILS_BY_DATE, query = ReservationDetails.TICKET_DETAILS_BY_DATE_QUERY),
-		@NamedQuery(name = ReservationDetails.TICKET_DETAILS_BY_PNR, query = ReservationDetails.TICKET_DETAILS_BY_PNR_QUERY) })
+		@NamedQuery(name = ReservationDetails.TICKET_DETAILS_BY_PNR, query = ReservationDetails.TICKET_DETAILS_BY_PNR_QUERY),
+		@NamedQuery(name = ReservationDetails.RESERVATION_DETAILS_BY_ELIGIBLE_CASHBACK, query = ReservationDetails.RESERVATION_DETAILS_BY_ELIGIBLE_CASHBACK_QUERY)})
 public class ReservationDetails {
 
 	public static final String TICKET_DETAILS_BY_PARAMETERS = "ReservationDetails.ticketDetailsByParameters";
 	public static final String TICKET_DETAILS_BY_PARAMETERS_QUERY = "Select distinct rd from reservationDetails rd "
 			+ "left join passengerDetails pd on rd.passengerDetails = pd.passengerId "
 			+ "left join address a on rd.pnr = a.reservationDetails "
-			+ "left join addressDetail ad on a.addressId = ad.address " 
+			+ "left join addressDetail ad on a.addressId = ad.address "
 			+ "where (:travelType IS NULL OR a.travelType = :travelType) AND (:bookingStatus IS NULL OR rd.bookingStatus = :bookingStatus) "
 			+ "AND (:source IS NULL OR rd.source = :source) AND (:destination IS NULL OR rd.destination = :destination)";
-	
+
 	public static final String TICKET_DETAILS_BY_DATE = "ReservationDetails.ticketDetailsByDate";
 	public static final String TICKET_DETAILS_BY_DATE_QUERY = "Select distinct rd from reservationDetails rd "
 			+ "left join passengerDetails pd on rd.passengerDetails = pd.passengerId "
@@ -42,6 +43,13 @@ public class ReservationDetails {
 	public static final String TICKET_DETAILS_BY_PNR = "ReservationDetails.ticketDetailsByPnr";
 	public static final String TICKET_DETAILS_BY_PNR_QUERY = "Select distinct rd from reservationDetails rd "
 			+ "where rd.pnr = :pnr";
+	
+	public static final String RESERVATION_DETAILS_BY_ELIGIBLE_CASHBACK = "ReservationDetails.reservationDetailsByCashbackEligibility";
+	public static final String RESERVATION_DETAILS_BY_ELIGIBLE_CASHBACK_QUERY = "Select distinct rd from reservationDetails rd "
+			+ "left join passengerDetails pd on rd.passengerDetails = pd.passengerId "
+			+ "left join address a on rd.pnr = a.reservationDetails "
+			+ "left join addressDetail ad on a.addressId = ad.address "
+			+ "where pd.gender = :gender AND pd.passengerAge < :age AND a.travelType = :travelType AND rd.bookingStatus = :bookingStatus";
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -54,8 +62,10 @@ public class ReservationDetails {
 	private String destination;
 
 	private LocalDateTime bookingDateTime;
-	
+
 	private String bookingStatus;
+
+	private Double ticketPrice;
 
 	@JsonBackReference
 	@ManyToOne
@@ -72,13 +82,15 @@ public class ReservationDetails {
 
 	public ReservationDetails(Long pnr, @NotBlank(message = "Source City should not be blank") String source,
 			@NotBlank(message = "Destination City should not be blank") String destination,
-			LocalDateTime bookingDateTime, String bookingStatus, PassengerDetails passengerDetails, Address address) {
+			LocalDateTime bookingDateTime, String bookingStatus, Double ticketPrice, PassengerDetails passengerDetails,
+			Address address) {
 		super();
 		this.pnr = pnr;
 		this.source = source;
 		this.destination = destination;
 		this.bookingDateTime = bookingDateTime;
 		this.bookingStatus = bookingStatus;
+		this.ticketPrice = ticketPrice;
 		this.passengerDetails = passengerDetails;
 		this.address = address;
 	}
@@ -114,13 +126,21 @@ public class ReservationDetails {
 	public void setBookingDateTime(LocalDateTime bookingDateTime) {
 		this.bookingDateTime = bookingDateTime;
 	}
-	
+
 	public String getBookingStatus() {
 		return bookingStatus;
 	}
 
 	public void setBookingStatus(String bookingStatus) {
 		this.bookingStatus = bookingStatus;
+	}
+
+	public Double getTicketPrice() {
+		return ticketPrice;
+	}
+
+	public void setTicketPrice(Double ticketPrice) {
+		this.ticketPrice = ticketPrice;
 	}
 
 	public PassengerDetails getPassengerDetails() {

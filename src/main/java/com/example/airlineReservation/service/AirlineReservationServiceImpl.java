@@ -15,6 +15,8 @@ import org.springframework.util.ReflectionUtils;
 import com.example.airlineReservation.model.ReservationDetails;
 import com.example.airlineReservation.repository.AirlineReservationRepository;
 import com.example.airlineReservation.util.BookingStatus;
+import com.example.airlineReservation.util.CashbackDetailsOfPassenger;
+import com.example.airlineReservation.util.CashbackDetailsOfPassengerOutput;
 import com.example.airlineReservation.util.FieldValidationStatus;
 import com.example.airlineReservation.util.PerformStatus;
 import com.example.airlineReservation.util.Status;
@@ -154,6 +156,42 @@ public class AirlineReservationServiceImpl implements AirlineReservationService 
 		statuses.add(PerformStatus.bookingCancelFailed());
 		fieldValidationStatus.setStatus(statuses);
 		return fieldValidationStatus;
+	}
+
+	@Override
+	public CashbackDetailsOfPassengerOutput getBookingDetailsByCashbackEligibilty(Integer age, String gender,
+			String travelType) {
+		List<ReservationDetails> passengerDetails = airlineReservationRepository.getBookingDetailsByCashbackEligibilty(age, gender, travelType);
+		return getCashbackDetailsOfPassengers(passengerDetails);
+	}
+	
+	private static CashbackDetailsOfPassengerOutput getCashbackDetailsOfPassengers(List<ReservationDetails> reservationDetails) {
+		List<CashbackDetailsOfPassenger> cashbackDetailsOfPassengers = new ArrayList<>();
+		CashbackDetailsOfPassengerOutput cashbackDetailsOfPassengerOutput = new CashbackDetailsOfPassengerOutput();
+		List<Status> statusList = new ArrayList<>();
+		Status  status = new Status();
+		if(!reservationDetails.isEmpty()) {
+			cashbackDetailsOfPassengers = reservationDetails.stream()
+					.map(reservationDetail -> new CashbackDetailsOfPassenger(reservationDetail.getPassengerDetails().getPassengerId(), 
+							reservationDetail.getPassengerDetails().getPassengerName(), reservationDetail.getPassengerDetails().getEmailId(), 
+							reservationDetail.getPnr(), reservationDetail.getTicketPrice(), cashbackAmount(reservationDetail.getTicketPrice())))
+					.collect(Collectors.toList());
+			status.setStatusLevel("success");
+			status.setMessage("Cashback Details of Passengers Fetched Successfully");
+			statusList.add(status);
+			cashbackDetailsOfPassengerOutput.setStatus(statusList);
+			cashbackDetailsOfPassengerOutput.setCashbackDetailsOfPassengers(cashbackDetailsOfPassengers);
+			return cashbackDetailsOfPassengerOutput;
+		}
+		status.setStatusLevel("success");
+		status.setMessage("Cashback Details not available!!");
+		statusList.add(status);
+		cashbackDetailsOfPassengerOutput.setStatus(statusList);
+		return cashbackDetailsOfPassengerOutput;
+	}
+	
+	private static Double cashbackAmount(Double price) {
+		return (20 * price) / 100;
 	}
 
 }

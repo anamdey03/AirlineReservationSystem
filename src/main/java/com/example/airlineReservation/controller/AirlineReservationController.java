@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.airlineReservation.model.ReservationDetails;
 import com.example.airlineReservation.service.AirlineReservationService;
+import com.example.airlineReservation.util.CashbackDetailsOfPassengerOutput;
 import com.example.airlineReservation.util.FieldValidationStatus;
 import com.example.airlineReservation.util.Status;
 import com.example.airlineReservation.util.TravelDetailsOutput;
@@ -122,6 +123,22 @@ public class AirlineReservationController {
 				.registerModule(new JavaTimeModule()).setDateFormat(new StdDateFormat())
 				.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 		return new ResponseEntity<String>(customerMapper.writeValueAsString(travelDetails), HttpStatus.OK);
+	}
+	
+	// Get Reservation Details and Cashback Amount of Passengers with respect to their Age, Gender & Travel Type
+	@RequestMapping(path = "cashback/age/{age}/gender/{gender}/travelType/{travelType}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Fetching Cashback Details of Passengers with respect to their Age, Gender & Travel Type", response = CashbackDetailsOfPassengerOutput.class, responseContainer = "String", httpMethod = "GET")
+	public ResponseEntity<String> getBookingDetailsByCashbackEligibilty(@PathVariable Integer age,
+																		@PathVariable String gender,
+																		@PathVariable String travelType) throws JsonProcessingException {
+		ObjectMapper customerMapper = new ObjectMapper();
+		CashbackDetailsOfPassengerOutput passengerDetails = airlineReservationService.getBookingDetailsByCashbackEligibilty(age, gender, travelType);
+		customerMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+		customerMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+		customerMapper.setAnnotationIntrospector(new JacksonAnnotationIntrospector())
+				.registerModule(new JavaTimeModule()).setDateFormat(new StdDateFormat())
+				.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+		return new ResponseEntity<String>(customerMapper.writeValueAsString(passengerDetails), HttpStatus.OK);
 	}
 
 	@ResponseStatus(HttpStatus.BAD_REQUEST)

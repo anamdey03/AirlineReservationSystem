@@ -25,7 +25,7 @@ public class PassengerDetails {
 	public static final String PASSENGER_DETAILS_BY_ID = "PassengerDetails.passengerDetailsById";
 	public static final String PASSENGER_DETAILS_BY_ID_QUERY = "Select distinct pd from passengerDetails pd "
 			+ "where pd.passengerId = :passengerId";
-
+	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long passengerId;
