@@ -1,6 +1,8 @@
 package com.example.airlineReservation.util;
 
-public class Status {
+import java.io.Serializable;
+
+public class Status implements Serializable {
 
 	private String statusLevel;
 	private String message;

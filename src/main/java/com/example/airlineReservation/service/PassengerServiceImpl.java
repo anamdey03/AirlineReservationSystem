@@ -33,6 +33,7 @@ public class PassengerServiceImpl implements PassengerService {
 		if (!passengerDetails.getPassengerId().equals(null)) {
 			statuses.add(PerformStatus.passengerCreatedSuccess());
 			fieldValidationStatus.setStatus(statuses);
+			fieldValidationStatus.setPassengerId(passengerDetails.getPassengerId());
 			return fieldValidationStatus;
 		}
 		statuses.add(PerformStatus.passengerCreatedFailed());

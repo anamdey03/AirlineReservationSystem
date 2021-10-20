@@ -13,7 +13,7 @@ public interface AirlineReservationService {
 
 	public FieldValidationStatus addBookingDetails(ReservationDetails airlineReservation);
 	public TravelDetailsOutput getTravelDetailsByParameters(String travelType, String bookingStatus, String source, String destination);
-	public TravelDetailsOutput getTravelDetailsByDate(String startDate, String endDate);
+	public TravelDetailsOutput getTravelDetailsByDate(String startDate, String endDate, boolean isCacheable);
 	public FieldValidationStatus updateBookingDetails(Long pnr, Map<String, Object> updates) throws ValidationException;
 	public FieldValidationStatus cancelBookingDetails(Long pnr);
 	public CashbackDetailsOfPassengerOutput getBookingDetailsByCashbackEligibilty(Integer age, String gender, String travelType);

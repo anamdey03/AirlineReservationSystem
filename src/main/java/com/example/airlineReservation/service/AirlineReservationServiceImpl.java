@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import javax.validation.ValidationException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.util.ReflectionUtils;
 
 import com.example.airlineReservation.model.ReservationDetails;
@@ -31,21 +32,26 @@ public class AirlineReservationServiceImpl implements AirlineReservationService 
 	@Override
 	public FieldValidationStatus addBookingDetails(ReservationDetails airlineReservation) {
 		airlineReservation.setBookingDateTime(LocalDateTime.now());
-		airlineReservation.setBookingStatus(BookingStatus.BOOKED.name());
+		airlineReservation.setBookingStatus(BookingStatus.BOOKED.getShortCode());
 		ReservationDetails reservationDetailsAdded = airlineReservationRepository
 				.saveBookingDetails(airlineReservation);
 		return addedBookingDetails(reservationDetailsAdded);
 	}
 
 	@Override
+	@Cacheable(value = "travelDetailCache", key = "{#root.methodName, #travelType, #bookingStatus, #source, #destination}")
 	public TravelDetailsOutput getTravelDetailsByParameters(String travelType, String bookingStatus, String source, String destination) {
+		System.out.println("Retrieving data from the database");
 		List<ReservationDetails> reservationDetails = airlineReservationRepository
 				.getTravelDetailsByParameters(travelType, bookingStatus, source, destination);
 		return getBookingDetails(reservationDetails);
 	}
 
 	@Override
-	public TravelDetailsOutput getTravelDetailsByDate(String startDate, String endDate) {
+//	@Cacheable(value = "travel-cache", key = "'TravelCache'+#startDate+#endDate")
+//	@CacheEvict(value = "ten-second-cache", key = "'TravelDetailsInCache'+#startDate+#endDate", condition = "#isCacheable == null || !#isCacheable", beforeInvocation = true)
+//	@Cacheable(value = "ten-second-cache", key = "'TravelDetailsInCache'+#startDate+#endDate", condition = "#isCacheable != null && #isCacheable")
+	public TravelDetailsOutput getTravelDetailsByDate(String startDate, String endDate, boolean isCacheable) {
 		List<ReservationDetails> reservationDetails = airlineReservationRepository.getTravelDetailsByDate(startDate,
 				endDate);
 		return getBookingDetails(reservationDetails);
@@ -70,8 +76,8 @@ public class AirlineReservationServiceImpl implements AirlineReservationService 
 	@Override
 	public FieldValidationStatus cancelBookingDetails(Long pnr) {
 		ReservationDetails reservationDetails = airlineReservationRepository.getBookingDetailsByPnr(pnr);
-		if (reservationDetails.getBookingStatus().equals(BookingStatus.BOOKED.name())) {
-			reservationDetails.setBookingStatus(BookingStatus.CANCELLED.name());
+		if (reservationDetails.getBookingStatus().equals(BookingStatus.BOOKED.getShortCode())) {
+			reservationDetails.setBookingStatus(BookingStatus.CANCELLED.getShortCode());
 			reservationDetails = airlineReservationRepository.updateBookingDetails(reservationDetails);
 			return cancelBookingDetails(reservationDetails);
 		}
@@ -117,6 +123,7 @@ public class AirlineReservationServiceImpl implements AirlineReservationService 
 		if (!reservationDetails.getPnr().equals(null)) {
 			statuses.add(PerformStatus.bookingCreatedSuccess());
 			fieldValidationStatus.setStatus(statuses);
+			fieldValidationStatus.setPnr(reservationDetails.getPnr());
 			return fieldValidationStatus;
 		}
 		statuses.add(PerformStatus.bookingCreatedFailed());
@@ -140,7 +147,7 @@ public class AirlineReservationServiceImpl implements AirlineReservationService 
 	private static FieldValidationStatus cancelBookingDetails(ReservationDetails reservationDetails) {
 		FieldValidationStatus fieldValidationStatus = new FieldValidationStatus();
 		List<Status> statuses = new ArrayList<Status>();
-		if (reservationDetails.getBookingStatus().equals(BookingStatus.CANCELLED.name())) {
+		if (reservationDetails.getBookingStatus().equals(BookingStatus.CANCELLED.getShortCode())) {
 			statuses.add(PerformStatus.bookingCancelSuccess());
 			fieldValidationStatus.setStatus(statuses);
 			return fieldValidationStatus;

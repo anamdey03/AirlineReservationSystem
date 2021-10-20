@@ -2,9 +2,13 @@ package com.example.airlineReservation.util;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonFilter;
+
 public class CashbackDetailsOfPassengerOutput {
 
 	private List<Status> status;
+	
+	@JsonFilter("CashbackFilter")
 	private List<CashbackDetailsOfPassenger> cashbackDetailsOfPassengers;
 
 	public CashbackDetailsOfPassengerOutput() {

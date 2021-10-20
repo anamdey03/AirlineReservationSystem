@@ -10,6 +10,7 @@ import javax.validation.Valid;
 import javax.validation.ValidationException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.example.airlineReservation.model.ReservationDetails;
 import com.example.airlineReservation.service.AirlineReservationService;
@@ -35,6 +38,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
+import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
+import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
@@ -62,7 +67,10 @@ public class AirlineReservationController {
 		customerMapper.setAnnotationIntrospector(new JacksonAnnotationIntrospector())
 				.registerModule(new JavaTimeModule()).setDateFormat(new StdDateFormat())
 				.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-		return new ResponseEntity<>(customerMapper.writeValueAsString(airlineReservationOutput), HttpStatus.OK);
+		HttpHeaders responseHeaders = new HttpHeaders();
+		UriComponents uriComponents = UriComponentsBuilder.fromPath("booking/{pnr}").buildAndExpand(airlineReservationOutput.getPnr());
+		responseHeaders.setLocation(uriComponents.toUri());
+		return new ResponseEntity<>(customerMapper.writeValueAsString(airlineReservationOutput), responseHeaders, HttpStatus.CREATED);
 	}
 
 	// Updated Booking Details by PNR
@@ -121,10 +129,12 @@ public class AirlineReservationController {
 	// Get Booking Details of Passengers between Start Date and End Date
 	@RequestMapping(path = "/booking/{startDate}/and/{endDate}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ApiOperation(value = "Fetch Booking Details Of Passengers Present Between Start and End Date", response = TravelDetailsOutput.class, responseContainer = "String", httpMethod = "GET")
-	public ResponseEntity<String> getTravelDetailsByDate(@PathVariable String startDate, @PathVariable String endDate)
+	public ResponseEntity<String> getTravelDetailsByDate(@PathVariable String startDate, 
+														 @PathVariable String endDate,
+														 @RequestParam(name = "isCacheable") boolean isCacheable)
 			throws JsonProcessingException {
 		ObjectMapper customerMapper = new ObjectMapper();
-		TravelDetailsOutput travelDetails = airlineReservationService.getTravelDetailsByDate(startDate, endDate);
+		TravelDetailsOutput travelDetails = airlineReservationService.getTravelDetailsByDate(startDate, endDate, isCacheable);
 		customerMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 		customerMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
 		customerMapper.setAnnotationIntrospector(new JacksonAnnotationIntrospector())
@@ -146,6 +156,13 @@ public class AirlineReservationController {
 		customerMapper.setAnnotationIntrospector(new JacksonAnnotationIntrospector())
 				.registerModule(new JavaTimeModule()).setDateFormat(new StdDateFormat())
 				.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+		
+		//Filtering of some fields
+		SimpleFilterProvider filterProvider = new SimpleFilterProvider();
+		filterProvider.addFilter("CashbackFilter",
+		        SimpleBeanPropertyFilter.serializeAllExcept("emailId", "pnr"));
+		customerMapper.setFilterProvider(filterProvider); 
+		
 		return new ResponseEntity<String>(customerMapper.writeValueAsString(passengerDetails), HttpStatus.OK);
 	}
 

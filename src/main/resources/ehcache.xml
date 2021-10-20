@@ -1,0 +1,34 @@
+<ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="ehcache.xsd"
+	updateCheck="true"
+	monitoring="autodetect"
+	dynamicConfig="true">
+
+	<diskStore path="java.io.tmpdir"/>  <!-- the default temp file path -->
+	
+	<cache name="travelDetailCache"
+		   maxEntriesLocalHeap="10000"   
+		   maxEntriesLocalDisk="1000"
+		   eternal="false"
+		   diskSpoolBufferSizeMB="20"
+		   timeToIdleSeconds="300" timeToLiveSeconds="600"
+		   memoryStoreEvictionPolicy="LFU"
+		   transactionalMode="off" >
+		<persistence strategy="localTempSwap" />
+	</cache>
+	
+</ehcache>
+
+<!-- maxEntriesLocalHeap -> maximum number of cache entries or bytes a cache can use in local heap memory -->
+<!-- maxEntriesLocalDisk -> maximum number of cache entries or bytes a cache can use in local Disk -->
+<!-- eternal if true indicates that cache will never expire -->
+<!-- diskSpoolBufferSizeMB -> The size of the disk spool used to buffer writes. It is 30MB by default -->
+<!-- timeToIdleSeconds - the default amount of time to live for an element from its last accessed or modified date -->
+<!-- timeToLiveSeconds - the default amount of time to live for an element from its creation date -->
+<!-- memoryStoreEvictionPolicy
+		The policy used to evict elements from the MemoryStore. This can be one of:
+		LRU - least recently used
+		LFU - Less frequently used
+		FIFO - first in first out, the oldest element by creation time
+		The default value is LRU -->
+<!-- transactionalMode - one of OFF, LOCAL, XA, XA_STRICT -->

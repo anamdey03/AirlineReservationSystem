@@ -1,8 +1,9 @@
 package com.example.airlineReservation.util;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class TravelDetailsOutput {
+public class TravelDetailsOutput implements Serializable {
 
 	private List<Status> status;
 	private List<TravelDetails> travelDetails;

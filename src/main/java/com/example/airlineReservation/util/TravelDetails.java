@@ -1,10 +1,11 @@
 package com.example.airlineReservation.util;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-public class TravelDetails {
+public class TravelDetails implements Serializable {
 
 	private Long pnr;
 	private String passengerName;
